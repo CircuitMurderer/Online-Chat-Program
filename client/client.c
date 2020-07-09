@@ -17,10 +17,17 @@ int sockfd = -1;
 
 int main(int argc, char **argv) {
     int opt;
+    struct LogRequest request;        
+    struct LogResponse response;  
+
+    request.team = 0;
+    strcpy(request.name, "\0");
+    strcpy(request.msg, "\0");
+      
     while ((opt = getopt(argc, argv, "h:p:t:m:n:")) != -1) {
         switch (opt) {
             case 't':
-                team = atoi(optarg);
+                request.team = atoi(optarg);
                 break;
             case 'h':
                 strcpy(server_ip, optarg);
@@ -29,10 +36,10 @@ int main(int argc, char **argv) {
                 server_port = atoi(optarg);
                 break;
             case 'm':
-                strcpy(log_msg, optarg);
+                strcpy(request.msg, optarg);
                 break;
             case 'n':
-                strcpy(name, optarg);
+                strcpy(request.name, optarg);
                 break;
             default:
                 fprintf(stderr, "Usage : %s [-hptmn]!\n", argv[0]);
@@ -42,10 +49,10 @@ int main(int argc, char **argv) {
     
 
     if (!server_port) server_port = atoi(get_conf_value(conf, "SERVERPORT"));
-    if (!team) team = atoi(get_conf_value(conf, "TEAM"));
+    if (!request.team) team = atoi(get_conf_value(conf, "TEAM")); //HERE
     if (!strlen(server_ip)) strcpy(server_ip, get_conf_value(conf, "SERVERIP"));
-    if (!strlen(name)) strcpy(name, get_conf_value(conf, "NAME"));
-    if (!strlen(log_msg)) strcpy(log_msg, get_conf_value(conf, "LOGMSG"));
+    if (!strlen(request.name)) strcpy(name, get_conf_value(conf, "NAME"));//HERE
+    if (!strlen(request.msg)) strcpy(log_msg, get_conf_value(conf, "LOGMSG"));//HERE
 
 
     DBG("<"GREEN"Conf Show"NONE"> : server_ip = %s, port = %d, team = %s, name = %s\n%s",\
@@ -62,8 +69,36 @@ int main(int argc, char **argv) {
         perror("socket_udp()");
         exit(1);
     }
-    
-    sendto(sockfd, log_msg, strlen(log_msg), 0, (struct sockaddr *)&server, len);
 
+    sendto(sockfd, (void *)&request, sizeof(request), 0, (struct sockaddr *)&server, len);//HERE
+
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(sockfd, &rfds);
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+
+    if(select(sockfd + 1, &rfds, NULL, NULL, &tv) == 0) {
+        perror("select()");
+        exit(1);
+    }
+
+    int re_ret;
+    re_ret = recvfrom(sockfd, (void*)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
+
+    if(re_ret != sizeof(response) || response.type == 1) {
+        sendto(sockfd, response.msg, strlen(response.msg), 0, (struct sockaddr *)&server, len);
+        exit(1);
+    }
+
+    char buff[512] = "Wuhu qifei!";
+    connect(sockfd, (struct sockaddr *)&server, len);
+    send(sockfd, buff, strlen(buff), 0);
+    bzero(buff, sizeof(buff));
+    while(recv(sockfd, buff, sizeof(buff), 0) > 0) {
+        DBG(RED"Server Info"NONE" : %s\n", buff);
+    }
+    close(sockfd);
     return 0;
 }
