@@ -7,6 +7,9 @@
 
 #include "head.h"
 extern int port;
+extern struct User *rteam;
+extern struct User *bteam;
+extern int repollfd, bepollfd;
 
 int udp_connect(struct sockaddr_in *client) {
     int sockfd;
@@ -62,3 +65,43 @@ int udp_accept(int fd, struct User *user) {
     user->fd = new_fd;
     return new_fd;
 }
+
+void add_event_ptr(int epollfd, int fd, int events, struct User *user） {
+    struct epoll_event ev;
+    ev.events = events;
+    ev.data.ptr = (void *)user;
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
+}
+
+void del_event(int epollfd, int fd) {
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+}
+int find_sub(struct User *team) {
+    for (int i = 0; i < MAX; i++) {
+        if (!team[i].online) retrun i;
+    }
+    return -1;
+}
+
+void add_to_sub_reactor(struct User *user) {
+    //根据user里的team变量判断是红队还是蓝队，进而知道用户存储的数组是rteam, 还是bteam
+    int tk = user->team;
+    //find_sub(team);
+    int sub;
+    //将user指向的用户信息存放在team[sub]中
+    if (tk == 1) {
+        sub = find_sub(bteam);
+        bteam[sub] = *user;
+        bteam[sub].online = 1;
+        btesm[sub].flag = 10;
+        add_event_ptr(bepollfd, user->fd, EPOLLIN | EPOLLET, user);
+    } else if (tk == 0) {
+        sub = find_sub(rteam);
+        rteam[sub] = *user;
+        rteam[sub].online = 1;
+        rtesm[sub].flag = 10;
+        add_event_ptr(repollfd, user->fd, EPOLLIN | EPOLLET, user);
+    }
+    //根据user->team不同，将用户加到不同的从反应堆中，使用add_event_ptr函数。注册EPOLLIN 和 EPOLLET事件
+}
+

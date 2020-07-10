@@ -50,6 +50,11 @@ struct User {
     struct Point loc;
 };
 
+struct ChatMsg {
+    char msg[1024];
+    int type;
+};
+
 
 //登录相关的
 struct  LogRequest {

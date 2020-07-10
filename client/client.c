@@ -9,9 +9,6 @@
 
 int server_port = 0;
 char server_ip[20] = {0};
-int team = -1;
-char name[20] = {0};
-char log_msg[512] = {0};
 char *conf = "./football.conf";
 int sockfd = -1;
 
@@ -20,7 +17,7 @@ int main(int argc, char **argv) {
     struct LogRequest request;        
     struct LogResponse response;  
 
-    request.team = 0;
+    request.team = -1;
     strcpy(request.name, "\0");
     strcpy(request.msg, "\0");
       
@@ -84,20 +81,28 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    int re_ret;
-    re_ret = recvfrom(sockfd, (void*)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
+    //int re_ret;
 
-    if(re_ret != sizeof(response) || response.type == 1) {
+    //re_ret = recvfrom(sockfd, (void*)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
+
+    /*if(re_ret != sizeof(response) || response.type == 1) {
         sendto(sockfd, response.msg, strlen(response.msg), 0, (struct sockaddr *)&server, len);
         exit(1);
     }
 
-    char buff[512] = "Wuhu qifei!";
+    char buff[512];// = "Wuhu qifei!";
     connect(sockfd, (struct sockaddr *)&server, len);
     send(sockfd, buff, strlen(buff), 0);
     bzero(buff, sizeof(buff));
     while(recv(sockfd, buff, sizeof(buff), 0) > 0) {
         DBG(RED"Server Info"NONE" : %s\n", buff);
+    }*/
+    struct ChatMsg msg;
+    while(1) {
+        msg.type = 1;
+        printf(YELLOW"Please Input :\n");
+        scanf("%[^\n]s", msg.msg);
+        send(sockfd, (void *)&msg, sizeof(msg), 0);
     }
     close(sockfd);
     return 0;
