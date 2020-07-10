@@ -30,7 +30,36 @@ void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
 
 }
 
-void do_work(struct User *user){
+void offline(struct User *user, struct ChatMsg *msg) {
+    bzero(msg->msg, sizeof(msg->msg));
+    msg->type = CHAT_SYS;
+    sprintf(msg->msg, "User < %s > has logged out!", msg->name);
+    send_all(msg);
+
+    if (user->team) pthread_mutex_lock(&bmutex);
+    else pthread_mutex_lock(&rmutex);
+
+    user->online = 0;
+    for(int i = 0; i < MAX; i++) {
+        if (!strcmp(user->name, rteam[i].name) && rteam[i].online) {
+            rteam[i].online = 0;
+            break;
+        } else if (!strcmp(user->name, bteam[i].name) && bteam[i].online) {
+            bteam[i].online = 0;
+            break;
+        }
+    }
+    int epollfd = user->team ? bepollfd :repollfd;
+    del_event(epollfd, user->fd);
+
+    if (user->team) pthread_mutex_unlock(&bmutex);
+    else pthread_mutex_unlock(&rmutex);
+
+    printf(GREEN"Server Info: "NONE"%s logout!\n", user->name);
+    close(user->fd);
+}
+
+void do_work(struct User *user) {
     //
     //收到一条信息，并打印。
     struct ChatMsg msg;
@@ -80,23 +109,7 @@ void do_work(struct User *user){
             }
         } 
     } else if (msg.type & CHAT_FIN) {
-        bzero(msg.msg, sizeof(msg.msg));
-        msg.type = CHAT_SYS;
-        sprintf(msg.msg, "User < %s > has logged out!", msg.name);
-        send_all(&msg);
-
-        if (user->team) pthread_mutex_lock(&bmutex);
-        else pthread_mutex_lock(&rmutex);
-
-        user->online = 0;
-        int epollfd = user->team ? bepollfd :repollfd;
-        del_event(epollfd, user->fd);
-
-        if (user->team) pthread_mutex_unlock(&bmutex);
-        else pthread_mutex_unlock(&rmutex);
-
-        printf(GREEN"Server Info : "NONE"%s logout!\n", user->name);
-        close(user->fd);
+        offline(user, &msg);
     }
 }
 

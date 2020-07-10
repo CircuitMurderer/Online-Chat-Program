@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    DBG(GREEN"INFO"NONE" : Server start On port %d.\n", port);
+    DBG(GREEN"INFO"NONE" : Server start on port %d.\n", port);
 
     rteam = (struct User *)calloc(MAX, sizeof(struct User));
     bteam = (struct User *)calloc(MAX, sizeof(struct User));
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     socklen_t len = sizeof(client);
 
     while (1) {
-        DBG(YELLOW"Main Reactor"NONE" : Waiting for clienti.\n");
+        DBG(YELLOW"Main Reactor"NONE" : Waiting for client.\n");
         int nfds = epoll_wait(epollfd, events, MAX * 2, -1); 
         if (nfds < 0) {
             perror("epoll_wait()");
@@ -100,7 +100,6 @@ int main(int argc, char **argv) {
         for (int i = 0; i < nfds; i++) {
             struct User user;
             bzero(&user, sizeof(user));
-            char buff[512] = {0};
             if (events[i].data.fd == listener) {
                 int new_fd = udp_accept(listener, &user);
                 if (new_fd > 0) {

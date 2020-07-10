@@ -87,6 +87,14 @@ int main(int argc, char **argv) {
         perror("select()");
         exit(1);
     }
+
+    int ret = recvfrom(sockfd, (void *)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
+    if (ret != sizeof(response) || response.type) {
+        DBG(RED"Error: "NONE"The Game Server refused your login.\nThis May be helpful: %s\n", response.msg);
+        exit(1);
+    }
+    DBG(GREEN"Server: "NONE"%s\n", response.msg);
+
     connect(sockfd, (struct sockaddr *)&server, len);
     
     pthread_t recv_t;
@@ -94,7 +102,7 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, logout);
     struct ChatMsg msg;
-    while(1) {
+    while (1) {
         bzero(&msg, sizeof(msg));
         msg.type = CHAT_WALL;
         strcpy(msg.name, request.name);
@@ -107,6 +115,5 @@ int main(int argc, char **argv) {
             send(sockfd, (void *)&msg, sizeof(msg), 0);
         }
     }
-    close(sockfd);
     return 0;
 }

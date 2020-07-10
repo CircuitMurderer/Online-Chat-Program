@@ -21,7 +21,7 @@ void *do_recv(void *arg) {
 		} else if (msg.type & CHAT_SYS) {
 			printf(YELLOW"Server Info"NONE" : %s\n", msg.msg);
 		} else if (msg.type & CHAT_FIN) {
-			printf(L_RED"Server Info"NONE"Server down!\n");
+			printf(L_RED"Server Info"NONE" : Server down!\n");
 			exit(1);
 		}
 	}
