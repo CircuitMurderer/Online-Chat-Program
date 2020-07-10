@@ -60,7 +60,7 @@ void do_work(struct User *user){
             send_to(to, &msg, user->fd);
         }
     } else if (msg.type & CHAT_FUNC) {
-        if (msg.msg[0] != '#' || msg.msg[2] != ' ') {
+        if (msg.msg[0] != '#') {
             memset(&r_msg, 0, sizeof(r_msg));
             r_msg.type = CHAT_SYS;
             sprintf(r_msg.msg, "FUNCTION:Bad format!");
