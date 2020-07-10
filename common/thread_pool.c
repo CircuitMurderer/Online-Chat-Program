@@ -6,11 +6,98 @@
  ************************************************************************/
 
 #include "head.h"
+extern int repollfd, bepollfd;
+extern struct User *rteam, *bteam;
+extern pthread_mutex_t rmutex, bmutex;
+
+void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
+    
+    struct ChatMsg msg;
+    bzero(&msg, sizeof(msg));
+    msg.type = CHAT_SYS;
+    
+    for (int i = 0; i < MAX; i++) {
+        if (rteam[i].online) {
+            bzero(msg.msg, sizeof(msg.msg));
+            sprintf(msg.msg, "Red team < %s > is online!", rteam[i].name);
+            send(user->fd, (void *)&msg, sizeof(msg), 0);
+        } else if (bteam[i].online) {
+            bzero(msg.msg, sizeof(msg.msg));
+            sprintf(msg.msg, "Blue team < %s > is online!", bteam[i].name);
+            send(user->fd, (void *)&msg, sizeof(msg), 0);
+        }
+    }
+
+}
 
 void do_work(struct User *user){
     //
     //收到一条信息，并打印。
-    DBG("In do_work %s\n", user->name);
+    struct ChatMsg msg;
+    struct ChatMsg r_msg;
+
+    bzero(&msg, sizeof(msg));
+    bzero(&r_msg, sizeof(r_msg));
+
+    recv(user->fd, (void *)&msg, sizeof(msg), 0);
+    if (msg.type & CHAT_WALL) {
+        printf(L_BLUE" < %s > "NONE"%s\n", user->name, msg.msg);
+        send_all(&msg);
+    } else if (msg.type & CHAT_MSG) {
+        char to[20] = {0};
+        int i;
+        for (i = 1; i <= 21; i++) {
+            if(msg.msg[i] == ' ') break;
+        }
+        if (msg.msg[i] != ' ' || msg.msg[0] != '@') {
+            memset(&r_msg, 0, sizeof(r_msg));
+            r_msg.type = CHAT_SYS;
+            sprintf(r_msg.msg, "MESSAGE:Bad format!");
+            send(user->fd, (void *)&r_msg, sizeof(r_msg), 0);
+        } else {
+            msg.type = CHAT_MSG;
+            strncpy(to, msg.msg + 1, i - 1);
+            send_to(to, &msg, user->fd);
+        }
+    } else if (msg.type & CHAT_FUNC) {
+        if (msg.msg[0] != '#' || msg.msg[2] != ' ') {
+            memset(&r_msg, 0, sizeof(r_msg));
+            r_msg.type = CHAT_SYS;
+            sprintf(r_msg.msg, "FUNCTION:Bad format!");
+            send(user->fd, (void *)&r_msg, sizeof(r_msg), 0);
+        } else {
+            switch(msg.msg[1]){
+                case '1': {
+                    disp_list(rteam, bteam, user);
+                    break;
+                } default: {
+                    memset(&r_msg, 0, sizeof(r_msg));
+                    r_msg.type = CHAT_SYS;
+                    sprintf(r_msg.msg, "FUNCTION:Unknown command!");
+                    send(user->fd, (void *)&r_msg, sizeof(r_msg), 0);
+                    break;
+                }
+            }
+        } 
+    } else if (msg.type & CHAT_FIN) {
+        bzero(msg.msg, sizeof(msg.msg));
+        msg.type = CHAT_SYS;
+        sprintf(msg.msg, "User < %s > has logged out!", msg.name);
+        send_all(&msg);
+
+        if (user->team) pthread_mutex_lock(&bmutex);
+        else pthread_mutex_lock(&rmutex);
+
+        user->online = 0;
+        int epollfd = user->team ? bepollfd :repollfd;
+        del_event(epollfd, user->fd);
+
+        if (user->team) pthread_mutex_unlock(&bmutex);
+        else pthread_mutex_unlock(&rmutex);
+
+        printf(GREEN"Server Info : "NONE"%s logout!\n", user->name);
+        close(user->fd);
+    }
 }
 
 void task_queue_init(struct task_queue *taskQueue, int sum, int epollfd) {

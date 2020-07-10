@@ -27,7 +27,6 @@ void *sub_reactor(void *arg){
             if (events[i].events & EPOLLIN) {
                 task_queue_push(taskQueue, (struct User *)events[i].data.ptr);
             }
-            
         }
     }
     return NULL;

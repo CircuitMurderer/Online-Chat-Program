@@ -11,6 +11,14 @@
 #define MAX 300 //用户数的二分之一
 #define NTHREAD 3
 
+#define CHAT_FIN 0x01
+#define CHAT_HEART 0x02
+#define CHAT_ACK 0x04
+#define CHAT_WALL 0x08
+#define CHAT_MSG 0x10
+#define CHAT_FUNC 0x20
+#define CHAT_SYS 0x40
+
 struct Score {
     int red;
     int blue;
@@ -41,6 +49,7 @@ struct Point {
     int x;
     int y;
 };
+
 struct User {
     int team; // 0 RED  1 BLUE
     int fd; //该玩家对应的连接
@@ -51,8 +60,9 @@ struct User {
 };
 
 struct ChatMsg {
-    char msg[1024];
     int type;
+    char name[20];
+    char msg[1024];
 };
 
 

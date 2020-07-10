@@ -12,14 +12,21 @@ char server_ip[20] = {0};
 char *conf = "./football.conf";
 int sockfd = -1;
 
+void logout(int signum) {
+    struct ChatMsg msg;
+    msg.type = CHAT_FIN;
+    send(sockfd, (void *)&msg, sizeof(msg), 0);
+    close(sockfd);
+    exit(0);
+}
+
 int main(int argc, char **argv) {
     int opt;
     struct LogRequest request;        
     struct LogResponse response;  
 
-    request.team = -1;
-    strcpy(request.name, "\0");
-    strcpy(request.msg, "\0");
+    bzero(&request, sizeof(request));
+    bzero(&response, sizeof(response));
       
     while ((opt = getopt(argc, argv, "h:p:t:m:n:")) != -1) {
         switch (opt) {
@@ -46,14 +53,14 @@ int main(int argc, char **argv) {
     
 
     if (!server_port) server_port = atoi(get_conf_value(conf, "SERVERPORT"));
-    if (!request.team) team = atoi(get_conf_value(conf, "TEAM")); //HERE
+    if (!request.team) request.team = atoi(get_conf_value(conf, "TEAM")); //HERE
     if (!strlen(server_ip)) strcpy(server_ip, get_conf_value(conf, "SERVERIP"));
-    if (!strlen(request.name)) strcpy(name, get_conf_value(conf, "NAME"));//HERE
-    if (!strlen(request.msg)) strcpy(log_msg, get_conf_value(conf, "LOGMSG"));//HERE
+    if (!strlen(request.name)) strcpy(request.name, get_conf_value(conf, "NAME"));//HERE
+    if (!strlen(request.msg)) strcpy(request.msg, get_conf_value(conf, "LOGMSG"));//HERE
 
 
-    DBG("<"GREEN"Conf Show"NONE"> : server_ip = %s, port = %d, team = %s, name = %s\n%s",\
-        server_ip, server_port, team ? "BLUE": "RED", name, log_msg);
+    DBG("<"GREEN"Conf Show"NONE"> : server_ip = %s, port = %d, team = %s, name = %s\n%s\n",\
+        server_ip, server_port, request.team ? "BLUE": "RED", request.name, request.msg);
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
@@ -80,29 +87,25 @@ int main(int argc, char **argv) {
         perror("select()");
         exit(1);
     }
-
-    //int re_ret;
-
-    //re_ret = recvfrom(sockfd, (void*)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
-
-    /*if(re_ret != sizeof(response) || response.type == 1) {
-        sendto(sockfd, response.msg, strlen(response.msg), 0, (struct sockaddr *)&server, len);
-        exit(1);
-    }
-
-    char buff[512];// = "Wuhu qifei!";
     connect(sockfd, (struct sockaddr *)&server, len);
-    send(sockfd, buff, strlen(buff), 0);
-    bzero(buff, sizeof(buff));
-    while(recv(sockfd, buff, sizeof(buff), 0) > 0) {
-        DBG(RED"Server Info"NONE" : %s\n", buff);
-    }*/
+    
+    pthread_t recv_t;
+    pthread_create(&recv_t, NULL, do_recv, NULL);
+
+    signal(SIGINT, logout);
     struct ChatMsg msg;
     while(1) {
-        msg.type = 1;
-        printf(YELLOW"Please Input :\n");
+        bzero(&msg, sizeof(msg));
+        msg.type = CHAT_WALL;
+        strcpy(msg.name, request.name);
+        printf(YELLOW"Please Input :\n"NONE);
         scanf("%[^\n]s", msg.msg);
-        send(sockfd, (void *)&msg, sizeof(msg), 0);
+        getchar();
+        if (strlen(msg.msg)) {
+            if (msg.msg[0] == '@') msg.type = CHAT_MSG;
+            if (msg.msg[0] == '#') msg.type = CHAT_FUNC;
+            send(sockfd, (void *)&msg, sizeof(msg), 0);
+        }
     }
     close(sockfd);
     return 0;
