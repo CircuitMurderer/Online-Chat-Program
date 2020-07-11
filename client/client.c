@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
 
     bzero(&request, sizeof(request));
     bzero(&response, sizeof(response));
+    request.team = -1;
       
     while ((opt = getopt(argc, argv, "h:p:t:m:n:")) != -1) {
         switch (opt) {
@@ -53,7 +54,7 @@ int main(int argc, char **argv) {
     
 
     if (!server_port) server_port = atoi(get_conf_value(conf, "SERVERPORT"));
-    if (!request.team) request.team = atoi(get_conf_value(conf, "TEAM")); //HERE
+    if (request.team == -1) request.team = atoi(get_conf_value(conf, "TEAM")); //HERE
     if (!strlen(server_ip)) strcpy(server_ip, get_conf_value(conf, "SERVERIP"));
     if (!strlen(request.name)) strcpy(request.name, get_conf_value(conf, "NAME"));//HERE
     if (!strlen(request.msg)) strcpy(request.msg, get_conf_value(conf, "LOGMSG"));//HERE
@@ -106,7 +107,7 @@ int main(int argc, char **argv) {
         bzero(&msg, sizeof(msg));
         msg.type = CHAT_WALL;
         strcpy(msg.name, request.name);
-        printf(YELLOW"Please Input :\n"NONE);
+        //printf(YELLOW"Please Input :\n"NONE);
         scanf("%[^\n]s", msg.msg);
         getchar();
         if (strlen(msg.msg)) {

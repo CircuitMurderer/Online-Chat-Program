@@ -21,7 +21,8 @@ void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
             bzero(msg.msg, sizeof(msg.msg));
             sprintf(msg.msg, "Red team < %s > is online!", rteam[i].name);
             send(user->fd, (void *)&msg, sizeof(msg), 0);
-        } else if (bteam[i].online) {
+        } 
+        if (bteam[i].online) {
             bzero(msg.msg, sizeof(msg.msg));
             sprintf(msg.msg, "Blue team < %s > is online!", bteam[i].name);
             send(user->fd, (void *)&msg, sizeof(msg), 0);

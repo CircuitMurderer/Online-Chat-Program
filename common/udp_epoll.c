@@ -109,6 +109,7 @@ void add_event_ptr(int epollfd, int fd, int events, struct User *user) {
     ev.events = events;
     ev.data.ptr = (void *)user;// = user;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
+    DBG("ADDED SECCESS\n");
 }
 
 void del_event(int epollfd, int fd) {
@@ -141,8 +142,8 @@ void add_to_sub_reactor(struct User *user) {
     if (tk) pthread_mutex_unlock(&bmutex);
     else pthread_mutex_unlock(&rmutex);
     DBG(L_RED"sub = %d, name = %s\n", sub, user->name);
-    if (tk) add_event_ptr(bepollfd, user->fd, EPOLLIN | EPOLLET, user);
-    else add_event_ptr(repollfd, user->fd, EPOLLIN | EPOLLET, user);
+    if (tk) add_event_ptr(bepollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
+    else add_event_ptr(repollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
     //根据user->team不同，将用户加到不同的从反应堆中，使用add_event_ptr函数。注册EPOLLIN 和 EPOLLET事件
 }
 
