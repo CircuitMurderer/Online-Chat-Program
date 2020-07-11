@@ -10,8 +10,8 @@ extern int repollfd, bepollfd;
 extern struct User *rteam, *bteam;
 extern pthread_mutex_t rmutex, bmutex;
 
-void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
-    
+int disp_list(struct User *rteam, struct User *bteam, struct User *user) {
+    int number = 0;
     struct ChatMsg msg;
     bzero(&msg, sizeof(msg));
     msg.type = CHAT_SYS;
@@ -21,14 +21,18 @@ void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
             bzero(msg.msg, sizeof(msg.msg));
             sprintf(msg.msg, "Red team < %s > is online!", rteam[i].name);
             send(user->fd, (void *)&msg, sizeof(msg), 0);
+            number++;
         } 
         if (bteam[i].online) {
             bzero(msg.msg, sizeof(msg.msg));
             sprintf(msg.msg, "Blue team < %s > is online!", bteam[i].name);
             send(user->fd, (void *)&msg, sizeof(msg), 0);
+            number++;
         }
     }
-
+    bzero(msg.msg, sizeof(msg.msg));
+    sprintf(msg.msg, "The number of online members: %d", number);
+    send(user->fd, (void *)&msg, sizeof(msg), 0);
 }
 
 void offline(struct User *user, struct ChatMsg *msg) {
