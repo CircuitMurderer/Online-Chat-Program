@@ -109,7 +109,7 @@ void add_event_ptr(int epollfd, int fd, int events, struct User *user) {
     ev.events = events;
     ev.data.ptr = (void *)user;// = user;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
-    DBG("ADDED SECCESS\n");
+    DBG("ADDED SUCCESS\n");
 }
 
 void del_event(int epollfd, int fd) {

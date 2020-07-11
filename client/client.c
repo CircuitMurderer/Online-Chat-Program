@@ -12,15 +12,21 @@ char server_ip[20] = {0};
 char *conf = "./football.conf";
 int sockfd = -1;
 
+WINDOW *message_win, *message_sub, *info_win;
+WINDOW *info_sub, *input_win, *input_sub;
+int msgnum = 0;
+
 void logout(int signum) {
     struct ChatMsg msg;
     msg.type = CHAT_FIN;
     send(sockfd, (void *)&msg, sizeof(msg), 0);
     close(sockfd);
+    endwin();
     exit(0);
 }
 
 int main(int argc, char **argv) {
+    setlocale(LC_ALL,"");
     int opt;
     struct LogRequest request;        
     struct LogResponse response;  
@@ -62,6 +68,8 @@ int main(int argc, char **argv) {
 
     DBG("<"GREEN"Conf Show"NONE"> : server_ip = %s, port = %d, team = %s, name = %s\n%s\n",\
         server_ip, server_port, request.team ? "BLUE": "RED", request.name, request.msg);
+    
+    init_ui();
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
@@ -70,6 +78,7 @@ int main(int argc, char **argv) {
 
     socklen_t len = sizeof(server);
 
+    //init_ui();
     if ((sockfd = socket_udp()) < 0) {
         perror("socket_udp()");
         exit(1);
@@ -77,6 +86,7 @@ int main(int argc, char **argv) {
 
     sendto(sockfd, (void *)&request, sizeof(request), 0, (struct sockaddr *)&server, len);//HERE
 
+    struct ChatMsg tmp;
     fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(sockfd, &rfds);
@@ -96,6 +106,10 @@ int main(int argc, char **argv) {
     }
     DBG(GREEN"Server: "NONE"%s\n", response.msg);
 
+    strcpy(tmp.msg, response.msg);
+    show_message(message_sub, &tmp, 1);
+    show_info(info_sub, &request);
+
     connect(sockfd, (struct sockaddr *)&server, len);
     
     pthread_t recv_t;
@@ -104,17 +118,27 @@ int main(int argc, char **argv) {
     signal(SIGINT, logout);
     struct ChatMsg msg;
     while (1) {
+        echo();
+        nocbreak();
         bzero(&msg, sizeof(msg));
         msg.type = CHAT_WALL;
+        w_gotoxy_puts(input_win, 1, 1, "Input Message : ");
         strcpy(msg.name, request.name);
         //printf(YELLOW"Please Input :\n"NONE);
-        scanf("%[^\n]s", msg.msg);
-        getchar();
+        //scanf("%[^\n]s", msg.msg);
+        //getchar();
+        wrefresh(input_win);
+        mvwscanw(input_win, 2, 1, "%[^\n]s", msg.msg);
         if (strlen(msg.msg)) {
             if (msg.msg[0] == '@') msg.type = CHAT_MSG;
             if (msg.msg[0] == '#') msg.type = CHAT_FUNC;
             send(sockfd, (void *)&msg, sizeof(msg), 0);
         }
+        wclear(input_win);
+        box(input_win, 0, 0);
+        wrefresh(input_win);
+        noecho();
+        cbreak();
     }
     return 0;
 }

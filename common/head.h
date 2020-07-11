@@ -35,6 +35,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <ncurses.h>
+#include <locale.h>
 #include "color.h"
 #include "store_score.h"
 #include "common.h"
@@ -45,4 +47,5 @@
 #include "sub_reactor.h"
 #include "udp_epoll.h"
 #include "client_recv.h"
+#include "chat_ui.h"
 #endif
