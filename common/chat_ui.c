@@ -111,7 +111,9 @@ void show_message(WINDOW *win, struct ChatMsg *msg, int type) {
     } else {
         msgnum = MSG_HEIGHT - 3;
         scroll(win);
-        wattron(win, COLOR_PAIR(5));
+        if (type == 1) wattron(win, COLOR_PAIR(4));
+		else if(type == -1) wattron(win, COLOR_PAIR(2));
+		else wattron(win, COLOR_PAIR(5));
         w_gotoxy_puts(win, 1, msgnum, timestr);
         w_gotoxy_puts(win, 10, msgnum, msg->name);
         wattron(win, COLOR_PAIR(3));
