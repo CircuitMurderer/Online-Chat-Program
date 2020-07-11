@@ -104,6 +104,11 @@ int main(int argc, char **argv) {
                 int new_fd = udp_accept(listener, &user);
                 if (new_fd > 0) {
                     add_to_sub_reactor(&user);
+                    struct ChatMsg msg;
+                    bzero(&msg, sizeof(msg));
+                    sprintf(msg.msg, "User < %s > has logged in!", user.name);
+                    msg.type = CHAT_SYS;
+                    send_all(&msg);
                 }
             }
         }
