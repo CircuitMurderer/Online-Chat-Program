@@ -127,20 +127,21 @@ void show_message(WINDOW *win, struct ChatMsg *msg, int type) {
 void show_info(WINDOW *win, struct LogRequest *request) {
 	char tmp[20];
 	strcpy(tmp, "Logged in.");
-	w_gotoxy_puts(win, 1, 1, tmp);
+	wattron(win, COLOR_PAIR(1));
+	w_gotoxy_puts(win, 6, 4, tmp);
 	strcpy(tmp, "User name:");
 	wattron(win, COLOR_PAIR(7));
-	w_gotoxy_puts(win, 1, 3, tmp);
+	w_gotoxy_puts(win, 6, 6, tmp);
 	wattron(win, COLOR_PAIR(3));
-	w_gotoxy_puts(win, 1, 4, request->name);
+	w_gotoxy_puts(win, 6, 7, request->name);
 	if (request->team) {
 		strcpy(tmp, "BLUE TEAM");
 		wattron(win, COLOR_PAIR(6));
-		w_gotoxy_puts(win, 1, 6, tmp);
+		w_gotoxy_puts(win, 6, 9, tmp);
 	} else {
 		strcpy(tmp, "RED TEAM");
 		wattron(win, COLOR_PAIR(2));
-		w_gotoxy_puts(win, 1, 6, tmp);
+		w_gotoxy_puts(win, 6, 9, tmp);
 	}
 	wrefresh(win);
     wrefresh(info_win);

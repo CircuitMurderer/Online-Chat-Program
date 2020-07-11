@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
     strcpy(tmp.msg, response.msg);
     show_message(message_sub, &tmp, 1);
-    show_info(info_sub, &request);
+    show_info(info_win, &request);
 
     connect(sockfd, (struct sockaddr *)&server, len);
     
