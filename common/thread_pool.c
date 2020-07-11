@@ -33,7 +33,7 @@ void disp_list(struct User *rteam, struct User *bteam, struct User *user) {
 void offline(struct User *user, struct ChatMsg *msg) {
     bzero(msg->msg, sizeof(msg->msg));
     msg->type = CHAT_SYS;
-    sprintf(msg->msg, "User < %s > has logged out!", msg->name);
+    sprintf(msg->msg, "User < %s > has logged out!", user->name);
     send_all(msg);
 
     if (user->team) pthread_mutex_lock(&bmutex);
